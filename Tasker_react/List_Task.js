@@ -43,19 +43,27 @@ export class List_task extends React.Component {
 const styles = StyleSheet.create({
   container: {
    flex: 1,
-   paddingTop: 22
+   paddingTop: 22,
+   backgroundColor: '#eee',
+   
   },
   itemt: {
     padding: 10,
     height: 44,
+    backgroundColor: '#eee',
+    
   },
   item: {
     fontSize: 18,
     padding: 10,
     height: 44,
+    backgroundColor: '#eee',
+    
   },
   list:
   {
-    flex:1
+    flex:1,
+    backgroundColor: '#eee',
+
   }
 })

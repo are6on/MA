@@ -55,31 +55,31 @@ export class Create_task extends React.Component {
       <KeyboardAvoidingView behavior='padding' style={styles.wrapper}>
         <View style={styles.formContainner}>
           <Text style={styles.text}>Task Name:</Text>
-          <TextInput underlineColorAndroid={'black'} 
+          <TextInput underlineColorAndroid={'black'} style={styles.input}
           onChangeText={(value) => this.setState({Taskname:value})} value={this.state.Taskname}/>
         </View>
         <View style={styles.formContainner}>
           <Text style={styles.text}>Description:</Text>
-          <TextInput underlineColorAndroid={'black'}
+          <TextInput underlineColorAndroid={'black'} style={styles.input}
           onChangeText={(value) => this.setState({Taskdescription:value})} value={this.state.Taskdescription}/>
         </View>
         <View style={styles.formContainner}>
           <Text style={styles.text}>Deadline:</Text>
           <TouchableHighlight style={styles.content} onPress={()=>{this.changeDate()}}>
-          <Text>{this.state.ddate.getMonth()+'/'+this.state.ddate.getDate()+'/'+
+          <Text style={styles.input}>{this.state.ddate.getMonth()+'/'+this.state.ddate.getDate()+'/'+
           this.state.ddate.getFullYear()}</Text>
         </TouchableHighlight>
         </View>
         <View style={styles.formContainner}>
           <Text style={styles.text}>Employer:</Text>
-          <Picker selectedValue={this.state.name}
+          <Picker selectedValue={this.state.name} style={styles.input}
            onValueChange={(itemValue, itemIndex) => this.setState({idp: itemIndex+1,name:itemValue})}>
             <Picker.Item label="All" value="All" />
             <Picker.Item label="Tom" value="Tom" />
             <Picker.Item label="Ron" value="Ron" />
 </Picker>
         </View>
-        <TouchableHighlight style={styles.wrapper} onPress={()=>{this.onSubmit()}}>
+        <TouchableHighlight style={styles.cont} onPress={()=>{this.onSubmit()}}>
         <View style={styles.button}>
           <Text style={{fontSize:20}}>Submit</Text>
         </View>
@@ -93,17 +93,44 @@ export class Create_task extends React.Component {
 const styles = StyleSheet.create({
   wrapper: {
      borderRadius: 20,
-     alignItems: 'center',
-     justifyContent: 'center',
-     backgroundColor: '#eee'
+     backgroundColor: '#eee',
+     flex:1
    },
    formContainner:{
      alignSelf:'stretch',
+     backgroundColor: '#eee',
+     flex:0.21
+
    },
    text:{
-
+    textAlign:'left',
+    fontWeight :'bold',
+    minWidth : 50,
+    fontSize:18,
+    backgroundColor: '#eee',
+    flex:0.5
    },
     content:{
-
-    }
+      flex:0.5,
+      backgroundColor: '#eee',
+    },
+  button:
+  {
+    backgroundColor: '#eee',
+    width: 150, 
+    padding: 10, 
+    alignItems:'center',
+    justifyContent:'center',
+    borderRadius: 20,
+    
+  },
+  cont:{
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  input:{
+    backgroundColor: '#eee',
+    flex:0.7
+  }
 });
