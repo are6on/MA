@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+    tools:context="com.example.dragos.tasker.ETaske">
+
+<EditText
+    android:id="@+id/ETaskNameText"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    android:ems="10"
+    android:inputType="textPersonName"
+    app:layout_constraintBottom_toTopOf="@+id/EDescriptionText"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/EtextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="16dp"
+        android:text="Task Name:"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@+id/ETaskNameText"
+        app:layout_constraintEnd_toStartOf="@+id/ETaskNameText"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/EtextView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="16dp"
+        android:text="Description:"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@+id/EDescriptionText"
+        app:layout_constraintEnd_toStartOf="@+id/EDescriptionText"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+<EditText
+    android:id="@+id/EDescriptionText"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    android:ems="10"
+    android:inputType="textMultiLine"
+    app:layout_constraintBottom_toTopOf="@+id/EDeadlineText"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/ETaskNameText" />
+
+    <TextView
+        android:id="@+id/EtextView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="16dp"
+        android:text="Employer:"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/EEmployerText"
+        app:layout_constraintEnd_toStartOf="@+id/EEmployerText"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/EtextView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="16dp"
+        android:text="Deadline:"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBaselineOf="@+id/EDeadlineText"
+        app:layout_constraintEnd_toStartOf="@+id/EDeadlineText"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/ESubmitbutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:drawable/button_onoff_indicator_on"
+        android:onClick="edit"
+        android:text="Submit"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/EEmployerText" />
+
+<Spinner
+    android:id="@+id/EEmployerText"
+    android:layout_width="215dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    app:layout_constraintBottom_toTopOf="@+id/ESubmitbutton"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/EDeadlineText" />
+
+<TextView
+    android:id="@+id/EDeadlineText"
+    android:layout_width="215sp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="16dp"
+    android:clickable="true"
+    android:text="1/1/2017"
+    android:textSize="18sp"
+    app:layout_constraintBottom_toTopOf="@+id/EEmployerText"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/EDescriptionText" />
+
+</android.support.constraint.ConstraintLayout>

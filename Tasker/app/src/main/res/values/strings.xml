@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Tasker</string>
+    <string-array name="employ">
+        <item>All</item>
+        <item>John</item>
+        <item>Hans</item>
+    </string-array>
+</resources>
