@@ -18,6 +18,7 @@ import Domain.Task;
 
 public class TaskArray {
     public static List<Task> tasks;
+    public static Person person;
     private TaskArray(){}
     public static List<Task> getInstance(){
         if(tasks==null) {

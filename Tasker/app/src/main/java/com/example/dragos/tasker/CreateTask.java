@@ -23,13 +23,18 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
+import java.util.List;
 
+import Dao.AppDatabase;
+import Domain.Person;
 import Domain.Task;
 import Domain.TaskArray;
 
 public class CreateTask extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
 
     public static int id=1;
+    public static List<Person> employers;
     private Date convertDate(String d){
         SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
         Date date=null;
@@ -67,14 +72,19 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
             }
         });
         Spinner spinner = (Spinner) findViewById(R.id.EmployerText);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.employ, android.R.layout.simple_spinner_item);
+        employers= AppDatabase.getDatabase(getApplicationContext()).personDao().getPersons();
+        List<CharSequence> emp=new LinkedList<>();
+        emp.add("All");
+        for(Person e:employers)
+            emp.add(e.getName());
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
+                 android.R.layout.simple_spinner_item,emp);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                id=i+1;
+                id=i;
             }
 
             @Override
@@ -95,8 +105,24 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
                     //bs.writeObject(new Task(1,0,id,name,description,convertDate(date)));
                     //bs.close();
                     //f.close();
-                TaskArray.getInstance().add(new Task(1,0,id,name,description,convertDate(date)));
-                    sendemail("aragon.raskolnikov@gmail.com",name,description,date);
+                String address="";
+                if(id!=0) {
+                    AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
+                            new Task(TaskArray.person.getId(), employers.get(id-1).getId()
+                                    , name, description, date));
+                    address=employers.get(id).getAddress();
+                }
+                else
+
+                    for(Person y:employers)
+                    {
+                        AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
+                                new Task(TaskArray.person.getId(), y.getId()
+                                        , name, description, date));
+                        address+=y.getAddress()+",";
+                    }
+
+                    sendemail(address,name,description,date);
                // } catch (IOException e) {
                   //  Toast.makeText(CreateTask.this, "Can't open file tasks.txt", Toast.LENGTH_SHORT).show();
                 //}

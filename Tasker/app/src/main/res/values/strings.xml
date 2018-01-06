@@ -5,4 +5,5 @@
         <item>John</item>
         <item>Hans</item>
     </string-array>
+    <string name="title_activity_chart">Chart</string>
 </resources>

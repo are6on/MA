@@ -3,6 +3,7 @@ package com.example.dragos.tasker;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.Intent;
+import android.provider.Contacts;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,13 +23,19 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
+import java.util.List;
 
+import Dao.AppDatabase;
+import Domain.Person;
 import Domain.Task;
 import Domain.TaskArray;
 
 public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
 
     public static int id=1;
+    public static List<Person> employers;
+    public static Task task;
     private Date convertDate(String d){
         SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
         Date date=null;
@@ -50,11 +57,31 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         Log.i("linepassed", "93");
         String date = ((TextView) findViewById(R.id.EDeadlineText)).getText().toString();
         Log.i("linepassed", "94");
-        int i = Integer.parseInt(getIntent().getStringExtra("EXTRA_INDEX"));
         Log.i("linepassed", "95");
 
-        TaskArray.getInstance().set(i, new Task(TaskArray.getInstance().get(i).getIdt(), 0, id,
-                name, description, convertDate(date)));
+        if(id!=0) {
+            task.setName(name);
+            task.setDescription(description);
+            task.setDeadline(date);
+            Log.i("linepassed", "96-e");
+            task.setIdp(employers.get(id-1).getId());
+            Log.i("linepassed", "97-e");
+            AppDatabase.getDatabase(getApplicationContext()).taskDao().updateTask(task);
+            Log.i("linepassed", "98-e");
+        }
+        else {
+            AppDatabase.getDatabase(getApplicationContext()).taskDao().updateTask(
+                    new Task(TaskArray.person.getId(), employers.get(id-1).getId()
+                            , name, description, date));
+            Log.i("linepassed", "100-e");
+            for (Person y : employers) {
+                if(y.getId()!=employers.get(id-1).getId())
+                AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
+                        new Task(TaskArray.person.getId(), y.getId()
+                                , name, description, date));
+            }
+            Log.i("linepassed", "111-e");
+        }
         // for(Task e : TaskArray.tasks)
         // bs.writeObject(e);
         // bs.close();
@@ -84,15 +111,20 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         });
         Spinner spinner = (Spinner) findViewById(R.id.EEmployerText);
         Log.i("linepassed","67");
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.employ, android.R.layout.simple_spinner_item);
+        employers= AppDatabase.getDatabase(getApplicationContext()).personDao().getPersons();
+        List<CharSequence> emp=new LinkedList<>();
+        emp.add("All");
+        for(Person e:employers)
+            emp.add(e.getName());
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,emp);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         Log.i("linepassed","72");
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                id=i+1;
+                id=i;
             }
 
             @Override
@@ -105,15 +137,22 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         EditText namee=(EditText)findViewById(R.id.ETaskNameText);
         EditText dese=(EditText)findViewById(R.id.EDescriptionText);
         Intent inte=getIntent();
-        namee.setText(inte.getStringExtra("EXTRA_NAME"));
-        dese.setText(inte.getStringExtra("EXTRA_DESCRIPTION"));
-        Log.i("linepassed",inte.getStringExtra("EXTRA_IDE"));
-        int pos= Integer.parseInt(inte.getStringExtra("EXTRA_IDE"));
+        task= AppDatabase.getDatabase(getApplicationContext()).taskDao()
+                .getTask(Integer.parseInt(inte.getStringExtra("EXTRA_ID"))).get(0);
+        namee.setText(task.getName());
+        dese.setText(task.getDescription());
         Log.i("linepassed","108");
-        spinner.setSelection(pos-1);
+        spinner.setSelection(getpos(task.getIdp())+1);
         Log.i("linepassed","109");
-        d.setText(inte.getStringExtra("EXTRA_DATE"));
+        d.setText(task.getDeadline());
         Log.i("linepassed","119");
+    }
+
+    private int getpos(int id){
+        for(int i=0;i<employers.size();i++)
+            if(employers.get(i).getId()==id)
+                return i;
+        return 0;
     }
 
     private void setDate(final Calendar c){

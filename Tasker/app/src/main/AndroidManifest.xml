@@ -18,7 +18,10 @@
         </activity>
         <activity android:name=".CreateTask" />
         <activity android:name=".TaskList" />
-        <activity android:name=".ETaske"></activity>
+        <activity android:name=".ETaske" />
+        <activity
+            android:name=".Chart" />
+        <activity android:name=".DPTask"/>
     </application>
 
 </manifest>
