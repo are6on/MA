@@ -19,8 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import Dao.AppDatabase;
 import Domain.Task;
+import Domain.TaskArray;
 
 /**
  * Created by Dragos on 22.12.2017.
@@ -87,7 +87,7 @@ public class TaskAdaptor extends ArrayAdapter{
             public void onClick(View view) {
                 Task t=(Task)getItem(position);
                 Intent intent = new Intent(getContext(),DPTask.class);
-                intent.putExtra("EXTRA_ID",Integer.toString(t.getIdt()));
+                intent.putExtra("EXTRA_ID",t.getIdt());
                 Log.i("linepassed","entering DPTask");
                 getContext().startActivity(intent);
             }
@@ -97,12 +97,11 @@ public class TaskAdaptor extends ArrayAdapter{
             public void onClick(View view) {
                 Task t=(Task)getItem(position);
                 Intent intent = new Intent(getContext(),ETaske.class);
-                intent.putExtra("EXTRA_ID",Integer.toString(t.getIdt()));
+                intent.putExtra("EXTRA_ID",t.getIdt());
                 Log.i("linepassed","entering ETask");
                 getContext().startActivity(intent);
             }
         });
-        final AppDatabase db= AppDatabase.getDatabase(getContext());
         handler.delb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -112,9 +111,8 @@ public class TaskAdaptor extends ArrayAdapter{
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 Task t=(Task)getItem(position);
-                                db.taskDao().removeTask(t.getIdt());
-                                remove(list.get(position));
-                                notifyDataChanged();
+                               TaskArray.getInstance().getReference("Tasks")
+                                       .child(t.getIdt()).removeValue();
                             }
                         })
                         .setNegativeButton("No", new DialogInterface.OnClickListener() {

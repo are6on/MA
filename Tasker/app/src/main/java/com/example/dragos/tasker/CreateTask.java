@@ -1,6 +1,7 @@
 package com.example.dragos.tasker;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,6 +17,12 @@ import android.app.DatePickerDialog;
 import android.support.v4.app.DialogFragment;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
 import java.text.DateFormat;
 
 import java.text.ParseException;
@@ -26,7 +33,6 @@ import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
-import Dao.AppDatabase;
 import Domain.Person;
 import Domain.Task;
 import Domain.TaskArray;
@@ -35,6 +41,10 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
 
     public static int id=1;
     public static List<Person> employers;
+    private DatabaseReference mref;
+    private Query persons;
+
+    private ProgressDialog dialog;
     private Date convertDate(String d){
         SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
         Date date=null;
@@ -59,9 +69,17 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
         }
     }
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final CreateTask that=this;
+        dialog = new ProgressDialog(this); // this = YourActivity
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setMessage("Loading. Please wait...");
+        dialog.setIndeterminate(true);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
         setContentView(R.layout.activity_create_task);
         TextView d=(TextView)findViewById(R.id.DeadlineText);
         d.setOnClickListener(new View.OnClickListener() {
@@ -72,15 +90,34 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
             }
         });
         Spinner spinner = (Spinner) findViewById(R.id.EmployerText);
-        employers= AppDatabase.getDatabase(getApplicationContext()).personDao().getPersons();
-        List<CharSequence> emp=new LinkedList<>();
-        emp.add("All");
-        for(Person e:employers)
-            emp.add(e.getName());
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
-                 android.R.layout.simple_spinner_item,emp);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        mref = TaskArray.getInstance().getReference();
+        persons = mref.child("Persons").orderByChild("role").equalTo(1);
+        persons.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Spinner spinner = (Spinner) findViewById(R.id.EmployerText);
+                    employers=new LinkedList<>();
+                    for (DataSnapshot p : dataSnapshot.getChildren()) {
+                        employers.add(p.getValue(Person.class));
+                    }
+                    List<CharSequence> emp=new LinkedList<>();
+                    emp.add("All");
+                    for(Person e:employers)
+                        emp.add(e.getName());
+                    ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(that,
+                            android.R.layout.simple_spinner_item,emp);
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinner.setAdapter(adapter);
+                    dialog.dismiss();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -107,18 +144,18 @@ public class CreateTask extends AppCompatActivity implements DatePickerDialog.On
                     //f.close();
                 String address="";
                 if(id!=0) {
-                    AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
-                            new Task(TaskArray.person.getId(), employers.get(id-1).getId()
-                                    , name, description, date));
-                    address=employers.get(id).getAddress();
+                    String idt=mref.child("Tasks").push().getKey();
+                    address=employers.get(id-1).getAddress();
+                    mref.child("Tasks").child(idt).setValue(new Task(idt, TaskArray.person.getId(),
+                            employers.get(id-1).getId(), name, description, date));
                 }
                 else
 
                     for(Person y:employers)
                     {
-                        AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
-                                new Task(TaskArray.person.getId(), y.getId()
-                                        , name, description, date));
+                        String idt=mref.child("Tasks").push().getKey();
+                        mref.child("Tasks").child(idt).setValue(new Task(idt, TaskArray.person.getId(),
+                                y.getId(), name, description, date));
                         address+=y.getAddress()+",";
                     }
 

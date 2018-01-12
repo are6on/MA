@@ -3,7 +3,7 @@ import { StyleSheet, View, TouchableHighlight, Text,  ScrollView,
   KeyboardAvoidingView, TextInput, TouchableOpacity,Dimensions ,
   DatePickerAndroid,Picker,Linking, AsyncStorage } from 'react-native';
 import Task from './Task';
-import {DaBe} from './Database';
+import {ref,firebaseAuth} from './Firebasedb';
 
 export class DPTask extends React.Component {
   static navigationOptions={
@@ -13,18 +13,33 @@ export class DPTask extends React.Component {
     super(props)
     console.log('----------------DP_TASK--------------------:entering');
     var obj=this.props.navigation.state.params.o;
-    var p=DaBe.getPerson(obj.idp);
     console.log('----------------DP_TASK--------------------:paased');
     console.log('----------------DP_TASK--------------------:em '+p.name);
     this.state = {
-      ddate:obj. deadline,
+      ddate:obj.deadline,
       Taskname:obj.name,
       Taskdescription:obj.description,
-      employer:p.name,
+      employer:'',
+      loading:true
     }
+    this.task=ref.child("Tasks").child(obj.idt);
+    var that=this;
+    this.on('value',(dataSnapshoot)=>{
+      if(dataSnapshoot.exits()){
+      var t=dataSnapshoot.val();
+      that.setState({ddate:t.deadline,Taskdescription:t.description});
+      var p=ref.child('Persons').child(t.idp).child('name');
+      p.once('value').then((datasnapShoo)=>{
+        if(datasnapShoo.exits())
+          that.setState({employer:datasnapShoo.val(),loading:false});
+      });
+    }
+    });
   }
 
   render() {
+    if(this.state.loading)
+    return(<View>loading...</View>);
     const {navigate}=this.props.navigation;
     return (
         < ScrollView style={styles.wrapper}>

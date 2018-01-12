@@ -5,7 +5,7 @@ import Task from './Task';
 export default class Taskarray {
     
         static myInstance = null;
-        list=new Array();
+        static p=null;
         
         static getInstance() {
             if (this.myInstance == null) {

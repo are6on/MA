@@ -1,9 +1,11 @@
 package com.example.dragos.tasker;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.provider.Contacts;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,22 +13,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
 import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
-import Dao.AppDatabase;
 import Domain.Person;
 import Domain.Task;
 import Domain.TaskArray;
@@ -36,15 +39,9 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
     public static int id=1;
     public static List<Person> employers;
     public static Task task;
-    private Date convertDate(String d){
-        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
-        Date date=null;
-        try {
-            date = formatter.parse(d);
-        } catch (ParseException e) {
-        }
-        return date;
-    }
+    private DatabaseReference mref;
+    private Query persons,ttask;
+    private ProgressDialog dialog;
 
     public void edit(View v) {
         // try {
@@ -58,30 +55,29 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         String date = ((TextView) findViewById(R.id.EDeadlineText)).getText().toString();
         Log.i("linepassed", "94");
         Log.i("linepassed", "95");
+        task.setName(name);
+        task.setDescription(description);
+        task.setDeadline(date);
+        Log.i("linepassed", "96-e");
+        task.setIdp(employers.get(id-1).getId());
 
         if(id!=0) {
-            task.setName(name);
-            task.setDescription(description);
-            task.setDeadline(date);
-            Log.i("linepassed", "96-e");
-            task.setIdp(employers.get(id-1).getId());
-            Log.i("linepassed", "97-e");
-            AppDatabase.getDatabase(getApplicationContext()).taskDao().updateTask(task);
-            Log.i("linepassed", "98-e");
+            Task t=task;
+            task=null;
+            mref.child("Tasks").child(t.getIdt()).setValue(t);
         }
-        else {
-            AppDatabase.getDatabase(getApplicationContext()).taskDao().updateTask(
-                    new Task(TaskArray.person.getId(), employers.get(id-1).getId()
-                            , name, description, date));
-            Log.i("linepassed", "100-e");
-            for (Person y : employers) {
-                if(y.getId()!=employers.get(id-1).getId())
-                AppDatabase.getDatabase(getApplicationContext()).taskDao().addTask(
-                        new Task(TaskArray.person.getId(), y.getId()
-                                , name, description, date));
+        else
+            for(Person y:employers)
+            {
+                Task t=task;
+                task=null;
+                mref.child("Tasks").child(task.getIdt()).setValue(t);
+                if(y.getId()!=task.getIdp()) {
+                    String idt = mref.child("Tasks").push().getKey();
+                    mref.child("Tasks").child(idt).setValue(new Task(idt, TaskArray.person.getId(),
+                            employers.get(id - 1).getId(), name, description, date));
+                }
             }
-            Log.i("linepassed", "111-e");
-        }
         // for(Task e : TaskArray.tasks)
         // bs.writeObject(e);
         // bs.close();
@@ -100,6 +96,12 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_etaske);
         TextView d=findViewById(R.id.EDeadlineText);
+        dialog = new ProgressDialog(this); // this = YourActivity
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setMessage("Loading. Please wait...");
+        dialog.setIndeterminate(true);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
         d.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -110,17 +112,37 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
             }
         });
         Spinner spinner = (Spinner) findViewById(R.id.EEmployerText);
-        Log.i("linepassed","67");
-        employers= AppDatabase.getDatabase(getApplicationContext()).personDao().getPersons();
-        List<CharSequence> emp=new LinkedList<>();
-        emp.add("All");
-        for(Person e:employers)
-            emp.add(e.getName());
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,emp);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        Log.i("linepassed","72");
+        mref = TaskArray.getInstance().getReference();
+        persons = mref.child("Persons").orderByChild("role").equalTo(1);
+        final ETaske that=this;
+        persons.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Spinner spinner = (Spinner) findViewById(R.id.EEmployerText);
+                    employers=new LinkedList<>();
+                    for (DataSnapshot p : dataSnapshot.getChildren()) {
+                        employers.add(p.getValue(Person.class));
+                    }
+                    List<CharSequence> emp=new LinkedList<>();
+                    emp.add("All");
+                    for(Person e:employers)
+                        emp.add(e.getName());
+                    ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(that,
+                            android.R.layout.simple_spinner_item,emp);
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinner.setAdapter(adapter);
+                    if(task!=null)
+                        spinner.setSelection(getpos(task.getIdp())+1);
+                }
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -132,25 +154,52 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
 
             }
         });
-
         Log.i("linepassed","111");
-        EditText namee=(EditText)findViewById(R.id.ETaskNameText);
-        EditText dese=(EditText)findViewById(R.id.EDescriptionText);
         Intent inte=getIntent();
-        task= AppDatabase.getDatabase(getApplicationContext()).taskDao()
-                .getTask(Integer.parseInt(inte.getStringExtra("EXTRA_ID"))).get(0);
-        namee.setText(task.getName());
-        dese.setText(task.getDescription());
-        Log.i("linepassed","108");
-        spinner.setSelection(getpos(task.getIdp())+1);
-        Log.i("linepassed","109");
-        d.setText(task.getDeadline());
-        Log.i("linepassed","119");
+        ttask=TaskArray.getInstance().getReference("Tasks/"+inte.getStringExtra("EXTRA_ID"));
+        ttask.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    TextView d=findViewById(R.id.EDeadlineText);
+                    Spinner spinner = (Spinner) findViewById(R.id.EEmployerText);
+                    EditText namee=(EditText)findViewById(R.id.ETaskNameText);
+                    EditText dese=(EditText)findViewById(R.id.EDescriptionText);
+                    Task t= dataSnapshot.getValue(Task.class);
+                    if(task!=null&&(!task.getIdp().equals(t.getIdp())||
+                            !task.getName().equals(t.getName())||
+                        !task.getDescription().equals(t.getDescription())||
+                            !task.getDeadline().equals(t.getDeadline()))) {
+                        AlertDialog.Builder alert=new AlertDialog.Builder(getApplicationContext())
+                                .setMessage("The task has been updated.")
+                                .setTitle("Alert")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {}});
+                        AlertDialog dialog = alert.create();
+                        dialog.show();
+                    }
+                    else {
+                        namee.setText(t.getName());
+                        dese.setText(t.getDescription());
+                        Log.i("linepassed", "108");
+                        spinner.setSelection(getpos(t.getIdp()) + 1);
+                        Log.i("linepassed", "109");
+                        d.setText(t.getDeadline());
+                        task=t;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
-    private int getpos(int id){
+    private int getpos(String id){
         for(int i=0;i<employers.size();i++)
-            if(employers.get(i).getId()==id)
+            if(employers.get(i).getId().equals(id))
                 return i;
         return 0;
     }
@@ -169,6 +218,7 @@ public class ETaske extends AppCompatActivity implements DatePickerDialog.OnDate
         setDate(cal);
         Log.i("linepassed","134");
     }
+
 
     public static class DatePickerFragment extends DialogFragment {
         @Override

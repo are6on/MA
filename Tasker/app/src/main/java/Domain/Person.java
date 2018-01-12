@@ -5,32 +5,31 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
+import com.google.firebase.database.IgnoreExtraProperties;
+
 /**
  * Created by Dragos on 02.01.2018.
  */
-@Entity(tableName = "Persons",indices = { @Index(value = "ID")})
+@IgnoreExtraProperties
 public class Person {
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "ID")
-    private int id;
-    @ColumnInfo(name = "Name")
+    private String id;
     private String Name;
-    @ColumnInfo(name = "Address")
     private String address;
-    @ColumnInfo(name = "Role")
     private int role;
 
-    public Person(String Name,String address, int role){
+    public Person(){}
+    public Person(String id,String Name,String address, int role){
         this.address=address;
         this.Name=Name;
         this.role=role;
+        this.id=id;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

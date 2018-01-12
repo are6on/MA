@@ -5,7 +5,7 @@ import { StyleSheet, View, TouchableHighlight, Text, ScrollView,
 import { NavigationActions } from 'react-navigation';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Task from './Task';
-import {DaBe} from './Database';
+import {ref,firebaseAuth} from './Firebasedb';
 
 export class Edit_task extends React.Component {
     static navigationOptions={
@@ -13,26 +13,45 @@ export class Edit_task extends React.Component {
       }
       constructor(props) {
         super(props)
-        console.log('----------------EDIT_TASK--------------------:entering');
-        var list=DaBe.getPersons();
-        console.log('----------------EDIT_TASK--------------------:list:'+list);
-        var namelist=new Array();
-        namelist.push('All');
-        for(var i=0;i<list.length;i++)
-          namelist.push(list[i].name);
         var obj=this.props.navigation.state.params.o;
         this.state = {
           object:obj,
           ddate:obj.deadline,
           Taskname:obj.name,
           Taskdescription:obj.description,
-          persons:list,
+          persons:null,
           idp:this.posp(obj.idp,list),
-          name:namelist[this.posp(obj.idp,list)+1],
+          name:'',
           idt:obj.idt,
           idm:obj.idm,
-          names:namelist
+          names:null,
+          loading:true
         }
+        this.pers=null;
+        this.task=null;
+      }
+      componentDidMount(){
+        that=this;
+        this.pers=ref.ref('Persons').orderByChild('role').equalTo(1);
+        this.pers.on('value',(dataSnapshoot)=>{
+          if(dataSnapshoot.exists()){
+            var list=dataSnapshoot.val();
+            var namelist=new Array();
+            namelist.push('All');
+            for(var i=0;i<list.length;i++)
+              namelist.push(list[i].name);
+            that.setState({persons:list,names:namelist,idp:that.posp(that.state.idt,list)});
+          }
+        });
+        this.task=ref.ref('Tasks').child(this.state.idt);
+        this.task.on('value',(dataSnapshoot)=>{
+          var t=dataSnapshoot.val();
+          that.setState({ddate:t.deadline,
+            Taskname:t.name,
+            Taskdescription:t.description,idp:that.posp(t.idp,list),
+            name:that.state.names[that.posp(t.idp,list)-1],loading:false,
+            idm:obj.idm,});
+        })
       }
 
       posp(id,l)
@@ -47,18 +66,20 @@ export class Edit_task extends React.Component {
       onSubmit(){
         console.log('----------------EDIT_TASK--------------------:updating');
         var id=this.state.idp;
-        if(id!=0)
-          DaBe.updateTask(new Task(this.state.Taskname,this.state.Taskdescription
-                ,0,this.state.idm,this.state.persons[id-1].id,this.state.ddate));
+        if(id!=0){
+          ref.ref("Tasks").child(idt).update(new Task(this.state.Taskname,this.state.Taskdescription
+                ,this.state.idt,idt,this.state.idm,this.state.persons[id-1].id,this.state.ddate));
+          }
         else{
           console.log('----------------EDIT_TASK--------------------:all selected');
-          DaBe.updateTask(new Task(this.state.Taskname,this.state.Taskdescription
+          ref.ref("Tasks").child(idt).update(new Task(this.state.Taskname,this.state.Taskdescription
             ,this.state.idt,this.state.idm,this.state.persons[id-1].id,this.state.ddate));
           for(var i=0;i<this.persons.length;i++)
-            if(i!=id-1)
-            DaBe.addTask(new Task(this.state.Taskname,this.state.Taskdescription
-              ,0,this.state.idm,this.state.persons[i].id,this.state.ddate));
-          
+            if(i!=id-1){
+              var idt =ref.child('Tasks').push().key;
+              ref.ref("Tasks").child(idt).set(new Task(this.state.Taskname,this.state.Taskdescription
+                    ,idt,this.state.idm,this.state.persons[i].id,this.state.ddate));
+            }
         }
         console.log('----------------EDIT_TASK--------------------:reseting');
           const resetAction = NavigationActions.reset({
@@ -74,7 +95,7 @@ export class Edit_task extends React.Component {
           const {action, year, month, day} = await DatePickerAndroid.open({ 
             date: new Date(), minDate:new Date() }); 
             if (action !== DatePickerAndroid.dismissedAction) {
-              this.setState({ddate:new Date(year,month+1,day)});
+              this.setState({ddate:month+1+'/'+day+'/'+year});
             } 
           } catch ({code, message}) { 
             console.warn('Cannot open date picker', message); }
@@ -108,8 +129,7 @@ export class Edit_task extends React.Component {
         <View style={styles.formContainner}>
           <Text style={styles.text}>Deadline:</Text>
           <TouchableHighlight style={styles.content} onPress={()=>{this.changeDate()}}>
-          <Text style={styles.input}>{this.state.ddate.getMonth()+'/'+this.state.ddate.getDate()+'/'+
-          this.state.ddate.getFullYear()}</Text>
+          <Text style={styles.input}>{this.state.ddate}</Text>
         </TouchableHighlight>
         </View>
         <View style={styles.formContainner}>

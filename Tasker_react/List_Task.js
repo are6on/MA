@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableHighlight, FlatList ,Image,Alert} from
 import Task from './Task';
 import Taskarray from './Taskarray';
 import {StackNavigator} from 'react-navigation';
-import {DaBe} from './Database';
+import {ref,firebaseAuth} from './Firebasedb';
 
 export class List_task extends React.Component {
   static navigationOptions={
@@ -13,10 +13,17 @@ export class List_task extends React.Component {
     super(props)
     console.log('----------------LIST_TASK--------------------:geting data');
     this.state = {
-      data:DaBe.getTasks()
+      data:null,
+      loading:true
     }
     console.log('----------------List_Task--------------------:data:'+this.state.data);
     this.remove = this.remove.bind(this);
+    this.qtasks=ref.child('Tasks').orderByChild('idm').equalTo(Taskarray.getInstance().p.id);
+    this.qtasks.on('value',(dataSnapshoot)=>{
+      if(dataSnapshoot.exists()){
+        that.setState({data:dataSnapshoot.val(),loading:false});
+      }
+    })
   }
   remove(item)
   {
@@ -29,11 +36,8 @@ export class List_task extends React.Component {
         {text: 'No', onPress: () => {return}},
         {text: 'Yes', onPress: () => {
           console.log('----------------LIST_TASK--------------------:deleting data');
-          DaBe. removeTask(item.idt);
+          ref.child('Tasks').child(item.idt).remove();
           console.log('----------------LIST_TASK--------------------:deleted data');
-          console.log('----------------LIST_TASK--------------------:seting data');
-          that.setState({data:DaBe.getTasks()});
-          console.log('----------------LIST_TASK--------------------:data:'+this.state.data);
         }},
       ],
       { cancelable: false }
@@ -41,7 +45,10 @@ export class List_task extends React.Component {
   }
   
   render() {
+    if(this.state.loading)
+    return(<View>loading...</View>);
     const {navigate}=this.props.navigation;
+    if(Taskarray.getInstance().p.role==0)
     return (
       <View style={styles.container}>
       <TouchableHighlight style={{height:42,backgroundColor:'grey',alignItems:'center'}}
@@ -79,6 +86,30 @@ export class List_task extends React.Component {
         />
       </View>
     );
+    else
+      return(
+        <FlatList
+        style={styles.list}
+        data={this.state.data}
+        renderItem={({item}) =>
+        <View>
+        <View style={styles.row}>
+          <TouchableHighlight style={styles.itemt} 
+          onPress={()=>navigate('DePTask',{o:item})}> 
+            <Text style={styles.item}>{item.name}</Text>
+          </TouchableHighlight>
+        </View>
+        <View style={{height: 1,width: "86%",backgroundColor: "#4c69a5",marginLeft: "14%"}}/>
+        </View>
+
+      }
+        keyExtractor={item => item.idt}
+        renderSeparator={ () => {
+          return (
+           <View style={{height: 1,width: "86%",backgroundColor: "#CED0CE",marginLeft: "14%"}}/>
+          );}}
+      />
+      );
   }
 }
 

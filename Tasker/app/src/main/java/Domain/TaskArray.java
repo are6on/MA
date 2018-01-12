@@ -4,6 +4,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.dragos.tasker.TaskList;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -17,14 +18,14 @@ import Domain.Task;
  */
 
 public class TaskArray {
-    public static List<Task> tasks;
     public static Person person;
+    public static FirebaseDatabase db;
     private TaskArray(){}
-    public static List<Task> getInstance(){
-        if(tasks==null) {
-            tasks= new ArrayList<>();
+    public static FirebaseDatabase getInstance(){
+        if(db==null) {
+            db=FirebaseDatabase.getInstance();
+            db.setPersistenceEnabled(true);
         }
-        Log.i("size:",Integer.toString(tasks.size()));
-        return tasks;
+        return db;
     }
 }
